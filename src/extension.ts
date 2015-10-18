@@ -29,7 +29,7 @@ export function activate() {
     let configMemento = Extensions.getConfigurationMemento('esQuotes');
     let normalQuoteRegex = /^["']$/;
     
-	Commands.registerTextEditorCommand('esQuotes.switchToTemplateString', (editor, edit) => {
+    Commands.registerTextEditorCommand('esQuotes.switchToTemplateString', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
         
         if (!activeTarget) {
@@ -44,7 +44,7 @@ export function activate() {
         let value = buildStringLiteral(activeTarget.body, activeTarget.opening, '`');
         
         edit.replace(activeTarget.range, value);
-	});
+    });
     
     Commands.registerTextEditorCommand('esQuotes.switchToNormalString', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
@@ -76,9 +76,9 @@ export function activate() {
                     edit.replace(activeTarget.range, value);
                 });
             });
-	});
+    });
     
-	Commands.registerTextEditorCommand('esQuotes.switchBetweenSingleDoubleQuotes', (editor, edit) => {
+    Commands.registerTextEditorCommand('esQuotes.switchBetweenSingleDoubleQuotes', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
         
         if (!activeTarget) {
@@ -96,7 +96,7 @@ export function activate() {
         let value = buildStringLiteral(activeTarget.body, originalQuote, quote);
         
         edit.replace(activeTarget.range, value);
-	});
+    });
 }
 
 function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTarget {
