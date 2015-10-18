@@ -11,7 +11,7 @@ Currently it can only handle strings without concatenation, but will support mor
 
 ## Install
 
-`Ctrl/Cmd + Shift + P` in Visual Studio Code, then:
+`Ctrl/Cmd + P` in Visual Studio Code, then:
 
 ```sh
 ext install es-quotes
