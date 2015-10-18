@@ -1,0 +1,57 @@
+{
+  "name": "es-quotes",
+  "version": "0.1.1",
+  "publisher": "vilicvane",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vilic/vscode-es-quotes.git"
+  },
+  "engines": {
+    "vscode": "*"
+  },
+  "activationEvents": [
+    "command:esQuotes.switchToTemplateString",
+    "command:esQuotes.switchToNormalString",
+    "command:esQuotes.switchBetweenSingleDoubleQuotes"
+  ],
+  "main": "./bld/extension",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "ES Quotes Configuration",
+      "properties": {
+        "esQuotes.defaultQuote": {
+          "type": "string",
+          "default": "'",
+          "description": "Default normal quote, can be ' or \"."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "esQuotes.switchToTemplateString",
+        "title": "Switch to Template String",
+        "category": "ES Quotes"
+      },
+      {
+        "command": "esQuotes.switchToNormalString",
+        "title": "Switch to Normal String",
+        "category": "ES Quotes"
+      },
+      {
+        "command": "esQuotes.switchBetweenSingleDoubleQuotes",
+        "title": "Switch between Single and Double Quotes",
+        "category": "ES Quotes"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+    "compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "regex-tools": "^0.1.8",
+    "vscode": "*"
+  }
+}
