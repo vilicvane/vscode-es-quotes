@@ -2,11 +2,6 @@ import { Range, Position } from 'vscode';
 import { RangeBuilder } from './range';
 
 interface InterStringGroupTarget extends StringGroupTarget {
-    /** ", ', ` or } */
-    // prefix: string;
-    /** ", ', ` or ${ */
-    // suffix: string;
-    
     bracketStack?: string[];
     partials?: InterStringTarget[];
 }
