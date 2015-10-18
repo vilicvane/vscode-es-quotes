@@ -17,7 +17,7 @@ var regexs = {
                 regexs: {
                     regexs: [
                         /\\(?:\r\n|[^])/,
-                        /(?!($quote))./
+                        /(?!($quote)|\\)./
                     ],
                     or: true,
                     repeat: '*'
