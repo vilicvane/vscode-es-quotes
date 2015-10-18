@@ -28,7 +28,7 @@ export type StringTarget = StringBodyTarget | StringGroupTarget;
 
 type InterStringTarget = StringBodyTarget | InterStringGroupTarget;
 
-const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*)|(["'])((?:\\(?:\r\n|[^])|(?!\2)[^])*)(\2)?|(`)|[()\[\]{]|(\})/g;
+const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*)|(["'])((?:\\(?:\r\n|[^])|(?!\2).)*)(\2)?|(`)|[()\[\]{]|(\})/g;
 const templateStringRegex = /* /$templateString/ */ /([`}])((?:\\[^]|(?!\$\{)[^`])*)(`|\$\{)?/g; // This comment is to fix high lighting: `
 
 /* /$parsing/ */
@@ -114,7 +114,7 @@ export function parse(source: string): StringTarget[] {
             );
             
             let openingQuote = templateStringGroups[TemplateStringRegexIndex.quote];
-            let closingQuote = templateStringGroups[TemplateStringRegexIndex.closingQuote];
+            let closingQuote = templateStringGroups[TemplateStringRegexIndex.closingQuote] || '`';
             
             currentStringTargets.push({
                 body,
@@ -126,8 +126,6 @@ export function parse(source: string): StringTarget[] {
             if (closingQuote === '${') {
                 pushNestedTargetStack();
             } else {
-                // If it's `, then it's closing as expected.
-                // If it's undefined, then it's a broken template string.
                 popNestedTargetStack();
             }
             

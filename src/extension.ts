@@ -144,7 +144,7 @@ function buildStringLiteral(body: string, originalQuote: string, quote: string):
         return quote + body + quote;
     }
     
-    let regex = /((\\n)?\\)?(\r?\n)|\\(\r\n|[^])|(\\$\\?\{|$\\\{)|([\'"`]|\$\{)/g;
+    let regex = /((\\n)?\\)?(\r?\n)|(\\\$\\?\{|\$\\\{)|\\(\r\n|[^])|([\'"`]|\$\{)/g;
     let normalQuoteRegex = /^["']$/;
     
     body = body.replace(regex, (
@@ -152,8 +152,8 @@ function buildStringLiteral(body: string, originalQuote: string, quote: string):
         multilineEnd: string,
         newLineLiteral: string,
         endOfLine: string,
-        escaped: string,
         templateEscaped: string,
+        escaped: string,
         containedQuote: string
     ) => {
         if (escaped) {
