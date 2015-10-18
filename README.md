@@ -7,6 +7,8 @@ So don't worry about your comments containing quotes.
 
 Currently it can only handle strings without concatenation, but will support more transforms in the future.
 
+![es-quotes](https://cloud.githubusercontent.com/assets/970430/10563944/4cc04462-75d1-11e5-984b-41e0a21a72c3.gif)
+
 ## Install
 
 `Ctrl/Cmd + Shift + P` in Visual Studio Code, then:
