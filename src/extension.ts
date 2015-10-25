@@ -16,7 +16,17 @@ import {
     StringGroupTarget
 } from './parser';
 
-import { RangeBuilder } from './range';
+import {
+    StringType
+} from './es-quotes';
+
+import {
+    transform
+} from './transform';
+
+import {
+    RangeBuilder
+} from './range';
 
 const DEFAULT_QUOTE = 'defaultQuote';
 
@@ -36,12 +46,12 @@ export function activate() {
             return;
         }
         
-        if (!normalQuoteRegex.test(activeTarget.opening)) {
+        if (activeTarget.type === StringType.template) {
             Window.showInformationMessage('The string at selected range is already a template string.')
             return;
         }
         
-        let value = buildStringLiteral(activeTarget.body, activeTarget.opening, '`');
+        let value = transform(activeTarget.body, activeTarget.type, StringType.template);
         
         edit.replace(activeTarget.range, value);
     });
@@ -53,7 +63,7 @@ export function activate() {
             return;
         }
         
-        if (normalQuoteRegex.test(activeTarget.opening)) {
+        if (activeTarget.type !== StringType.template) {
             Window.showInformationMessage('The string at selected range is already a normal string.')
             return;
         }
@@ -66,11 +76,13 @@ export function activate() {
         configMemento
             .getValue<string>(DEFAULT_QUOTE)
             .then(quote => {
-                if (!normalQuoteRegex.test(quote)) {
-                    quote = '\'';
+                if (!/^["']$/.test(quote)) {
+                    quote = "'";
                 }
                 
-                let value = buildStringLiteral(activeTarget.body, '`', quote);
+                let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
+                
+                let value = transform(activeTarget.body, StringType.template, type);
                 
                 return editor.edit(edit => {
                     edit.replace(activeTarget.range, value);
@@ -85,15 +97,14 @@ export function activate() {
             return;
         }
         
-        if (!normalQuoteRegex.test(activeTarget.opening)) {
+        if (activeTarget.type === StringType.template) {
             Window.showInformationMessage('The string at selected range is a template string.')
             return;
         }
         
-        let originalQuote = activeTarget.opening;
-        let quote = originalQuote === '"' ? '\'' : '"';
+        let type = activeTarget.type === StringType.doubleQuoted ? StringType.singleQuoted : StringType.doubleQuoted;
         
-        let value = buildStringLiteral(activeTarget.body, originalQuote, quote);
+        let value = transform(activeTarget.body, activeTarget.type, type);
         
         edit.replace(activeTarget.range, value);
     });
@@ -137,80 +148,4 @@ function findActiveStringTarget(targets: StringTarget[], selection: Range): Stri
     }
     
     return undefined;
-}
-
-function buildStringLiteral(body: string, originalQuote: string, quote: string): string {
-    if (originalQuote === quote) {
-        return quote + body + quote;
-    }
-    
-    let regex = /((\\n)?\\)?(\r?\n)|(\\\$\\?\{|\$\\\{)|\\(\r\n|[^])|([\'"`]|\$\{)/g;
-    let normalQuoteRegex = /^["']$/;
-    
-    body = body.replace(regex, (
-        text: string,
-        multilineEnd: string,
-        newLineLiteral: string,
-        endOfLine: string,
-        templateEscaped: string,
-        escaped: string,
-        containedQuote: string
-    ) => {
-        if (escaped) {
-            if (escaped === originalQuote) {
-                // No longer need escaping.
-                return escaped;
-            } else {
-                return text;
-            }
-        } else if (templateEscaped) {
-            if (normalQuoteRegex.test(quote)) {
-                return '${';
-            } else {
-                return text;
-            }
-        } else if (containedQuote) {
-            if (normalQuoteRegex.test(containedQuote)) {
-                if (containedQuote !== quote) {
-                    return containedQuote;
-                } else {
-                    return '\\' + containedQuote;
-                }
-            } else if (normalQuoteRegex.test(quote)) {
-                // Contained quote is ` or ${, can be savely put into " and ' string.
-                return containedQuote;
-            } else {
-                return '\\' + containedQuote;
-            }
-        } else {
-            if (normalQuoteRegex.test(quote)) {
-                if (normalQuoteRegex.test(originalQuote)) {
-                    // Switch between single and double quotes.
-                    return text;
-                } else if (multilineEnd) {
-                    // Template string to normal string.
-                    return text;
-                } else {
-                    return '\\n\\' + endOfLine;
-                }
-            } else if (normalQuoteRegex.test(originalQuote)) {
-                // Normal string to template string.
-                if (multilineEnd) {
-                    if (newLineLiteral) {
-                        return endOfLine;
-                    } else {
-                        return text;
-                    }
-                } else {
-                    // Shouldn't hit.
-                    return text;
-                }
-            } else {
-                // Shouldn't hit.
-                return text;
-            }
-        }
-    });
-    
-    return quote + body + quote;
 }

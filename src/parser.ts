@@ -1,5 +1,7 @@
 import { Range, Position } from 'vscode';
+
 import { RangeBuilder } from './range';
+import { StringType } from './es-quotes';
 
 interface InterStringGroupTarget extends StringGroupTarget {
     bracketStack?: string[];
@@ -8,9 +10,10 @@ interface InterStringGroupTarget extends StringGroupTarget {
 
 export interface StringBodyTarget {
     /** ", ', ` or } */
-    opening?: string;
+    opening: string;
     /** ", ', ` or ${ */
-    closing?: string;
+    closing: string;
+    type: StringType;
     body: string;
     range: Range;
 }
@@ -74,12 +77,15 @@ export function parse(source: string): StringTarget[] {
                 pushNestedTargetStack();
             }
             
-            currentStringTargets.push({
+            let target: StringBodyTarget = {
                 body,
                 range,
                 opening: quote,
-                closing: quote
-            });
+                closing: quote,
+                type: quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted
+            };
+            
+            currentStringTargets.push(target);
         } else if (
             groups[ParsingRegexIndex.templateStringQuote] || (
                 nestedStringTargetStack.length &&
@@ -111,12 +117,15 @@ export function parse(source: string): StringTarget[] {
             let openingQuote = templateStringGroups[TemplateStringRegexIndex.quote];
             let closingQuote = templateStringGroups[TemplateStringRegexIndex.closingQuote] || '`';
             
-            currentStringTargets.push({
+            let target: StringBodyTarget = {
                 body,
                 range,
                 opening: openingQuote,
-                closing: closingQuote
-            });
+                closing: closingQuote,
+                type: StringType.template
+            };
+            
+            currentStringTargets.push(target);
             
             if (closingQuote === '${') {
                 pushNestedTargetStack();

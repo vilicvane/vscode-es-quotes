@@ -1,6 +1,6 @@
 {
   "name": "es-quotes",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "vilicvane",
   "repository": {
     "type": "git",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "gulp": "^3.9.0",
-    "regex-tools": "^0.1.8",
+    "regex-tools": "^0.2.1",
     "vscode": "*"
   }
 }

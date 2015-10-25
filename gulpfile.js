@@ -4,12 +4,13 @@ const Gulp = require('gulp');
 const RegexTools = require('regex-tools');
 
 Gulp.task('update-regex', function () {
-    let rxFilePaths = [
+    let optionsFilePaths = [
         './src/regexs/parser-regex.js',
-        './src/regexs/template-string-regex.js'
+        './src/regexs/template-string-regex.js',
+        './src/regexs/transform-factor-regexs.js'
     ];
 
-    for (let rxFilePath of rxFilePaths) {
-        RegexTools.processRxFile(rxFilePath);
+    for (let path of optionsFilePaths) {
+        RegexTools.process(path);
     }
 });

@@ -2,6 +2,7 @@
 typings/**
 **/*.ts
 **/*.map
+bld/tests/**
 .gitignore
 jsconfig.json
 tsconfig.json
