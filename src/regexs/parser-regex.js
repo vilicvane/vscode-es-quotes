@@ -26,7 +26,10 @@ var regexs = {
             /($closingQuote:($quote))?/
         ],
         /($templateStringQuote:`)/,
-        /[()\[\]{]|($curlyKet:\})/
+        /($bracket:[()\[\]{}])/,
+        /($operator:[?&|+-]|&&|\|\||<<<?|>>>?)/,
+        /($whitespace:\s+)/,
+        /[^]/
     ],
     or: true
 };

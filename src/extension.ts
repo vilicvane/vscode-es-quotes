@@ -13,11 +13,15 @@ import {
     parse,
     StringTarget,
     StringBodyTarget,
-    StringGroupTarget
+    StringGroupTarget,
+    isStringGroupTarget,
+    isStringBodyTarget
 } from './parser';
 
 import {
-    StringType
+    StringType,
+    findActiveStringTargetInEditor,
+    findActiveStringTargetsInEditor
 } from './es-quotes';
 
 import {
@@ -30,14 +34,8 @@ import {
 
 const DEFAULT_QUOTE = 'defaultQuote';
 
-const supportedLanguages = [
-    'typescript',
-    'javascript'
-];
-
 export function activate() {
     let configMemento = Extensions.getConfigurationMemento('esQuotes');
-    let normalQuoteRegex = /^["']$/;
     
     Commands.registerTextEditorCommand('esQuotes.switchToTemplateString', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
@@ -47,7 +45,7 @@ export function activate() {
         }
         
         if (activeTarget.type === StringType.template) {
-            Window.showInformationMessage('The string at selected range is already a template string.')
+            Window.showInformationMessage('The string at selected range is already a template string.');
             return;
         }
         
@@ -57,19 +55,16 @@ export function activate() {
     });
     
     Commands.registerTextEditorCommand('esQuotes.switchToNormalString', (editor, edit) => {
-        let activeTarget = findActiveStringTargetInEditor(editor);
+        let activeTargets = findActiveStringTargetsInEditor(editor);
         
-        if (!activeTarget) {
+        if (!activeTargets) {
             return;
         }
         
-        if (activeTarget.type !== StringType.template) {
+        let firstTarget = activeTargets[0];
+        
+        if (isStringBodyTarget(firstTarget) && firstTarget.type !== StringType.template) {
             Window.showInformationMessage('The string at selected range is already a normal string.')
-            return;
-        }
-        
-        if (activeTarget.opening !== '`' || activeTarget.closing !== '`') {
-            Window.showInformationMessage('Not supported yet.')
             return;
         }
         
@@ -82,10 +77,44 @@ export function activate() {
                 
                 let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
                 
-                let value = transform(activeTarget.body, StringType.template, type);
-                
                 return editor.edit(edit => {
-                    edit.replace(activeTarget.range, value);
+                    for (let i = 0; i < activeTargets.length; i++) {
+                        let target = activeTargets[i];
+                        
+                        if (isStringBodyTarget(target)) {
+                            let value = transform(target.body, StringType.template, type);
+                            
+                            if (i > 0) {
+                                value = ' + ' + value;
+                                
+                                let previousTarget = activeTargets[i - 1];
+                                if (isStringGroupTarget(previousTarget) && previousTarget.hasLowPriorityOperator) {
+                                    value = ')' + value;
+                                }
+                            }
+                            
+                            if (i < activeTargets.length - 1) {
+                                value += ' + ';
+                                
+                                let nextTarget = activeTargets[i + 1];
+                                if (isStringGroupTarget(nextTarget)) {
+                                    if (nextTarget.hasLowPriorityOperator) {
+                                        value += '(';
+                                    }
+                                    
+                                    // if (nextTarget.whitespacesRangeAtBeginning && !nextTarget.whitespacesRangeAtBeginning.isEmpty()) {
+                                    //     edit.delete(nextTarget.whitespacesRangeAtBeginning);
+                                    // }
+                                    
+                                    // if (nextTarget.whitespacesRangeAtEnd && !nextTarget.whitespacesRangeAtEnd.isEmpty()) {
+                                    //     edit.delete(nextTarget.whitespacesRangeAtEnd);
+                                    // }
+                                }
+                            }
+                            
+                            edit.replace(target.range, value);
+                        }
+                    }
                 });
             });
     });
@@ -98,7 +127,7 @@ export function activate() {
         }
         
         if (activeTarget.type === StringType.template) {
-            Window.showInformationMessage('The string at selected range is a template string.')
+            Window.showInformationMessage('The string at selected range is a template string.');
             return;
         }
         
@@ -108,44 +137,4 @@ export function activate() {
         
         edit.replace(activeTarget.range, value);
     });
-}
-
-function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTarget {
-    let document = editor.getTextDocument();
-    let language = document.getLanguageId();
-    
-    if (supportedLanguages.indexOf(language) < 0) {
-        Window.showInformationMessage('Language not supported.');
-        return;
-    }
-    
-    let source = document.getText();
-    let selection = editor.getSelection();
-    
-    let stringTargets = parse(source);
-    let activeTarget = findActiveStringTarget(stringTargets, selection);
-    
-    if (!activeTarget) {
-        Window.showInformationMessage('No string found at selected range.');
-    }
-    
-    return activeTarget;
-}
-
-function findActiveStringTarget(targets: StringTarget[], selection: Range): StringBodyTarget {
-    for (let target of targets) {
-        let partials = (target as StringGroupTarget).partials;
-        if (partials) {
-            let foundTarget = findActiveStringTarget(partials, selection);
-            if (foundTarget) {
-                return foundTarget;
-            }
-        } else {
-            if ((target as StringBodyTarget).range.contains(selection)) {
-                return target as StringBodyTarget;
-            }
-        }
-    }
-    
-    return undefined;
 }

@@ -4,8 +4,8 @@ import { RangeBuilder } from './range';
 import { StringType } from './es-quotes';
 
 interface InterStringGroupTarget extends StringGroupTarget {
-    bracketStack?: string[];
-    partials?: InterStringTarget[];
+    bracketStack: string[];
+    partials: InterStringTarget[];
 }
 
 export interface StringBodyTarget {
@@ -19,14 +19,17 @@ export interface StringBodyTarget {
 }
 
 export interface StringGroupTarget {
-    partials?: StringTarget[];
+    partials: StringTarget[];
+    hasLowPriorityOperator: boolean;
+    whitespacesRangeAtBeginning: Range;
+    whitespacesRangeAtEnd: Range;
 }
 
 export type StringTarget = StringBodyTarget | StringGroupTarget;
 
 type InterStringTarget = StringBodyTarget | InterStringGroupTarget;
 
-const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|(`)|[()\[\]{]|(\})/g;
+const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|(`)|([()\[\]{}])|([?&|+-]|&&|\|\||<<<?|>>>?)|(\s+)|[^]/g;
 const templateStringRegex = /* /$templateString/ */ /([`}])((?:\\[^]|(?!\$\{)[^`])*)(`|\$\{)?/g; // This comment is to fix highlighting: `
 
 /* /$parsing/ */
@@ -36,7 +39,9 @@ const enum ParsingRegexIndex {
     stringBody,
     closingQuote,
     templateStringQuote,
-    curlyKet
+    bracket,
+    operator,
+    whitespace
 }
 
 /* /$templateString/ */
@@ -58,6 +63,7 @@ export function parse(source: string): StringTarget[] {
     let rootStringTargets: InterStringTarget[] = [];
     let nestedStringTargetStack: InterStringTarget[] = [];
     
+    let currentGroupTarget: InterStringGroupTarget;
     let currentStringTargets = rootStringTargets;
     let currentBracketStack: string[];
     
@@ -90,12 +96,16 @@ export function parse(source: string): StringTarget[] {
             groups[ParsingRegexIndex.templateStringQuote] || (
                 nestedStringTargetStack.length &&
                 currentBracketStack.indexOf('{') < 0 &&
-                groups[ParsingRegexIndex.curlyKet]
+                groups[ParsingRegexIndex.bracket] === '}'
             )
         ) {
             if (groups[ParsingRegexIndex.templateStringQuote]) {
+                // `abc${123}def`
+                // ^
                 pushNestedTargetStack();
             } else {
+                // `abc${123}def`
+                //          ^
                 popNestedTargetStack();
             }
             
@@ -128,24 +138,55 @@ export function parse(source: string): StringTarget[] {
             currentStringTargets.push(target);
             
             if (closingQuote === '${') {
+                // `abc${123}def`
+                //     ^
                 pushNestedTargetStack();
             } else {
+                // `abc${123}def`
+                //              ^
                 popNestedTargetStack();
             }
-            
         } else if (currentBracketStack) {
-            let bracket = groups[0];
+            if (groups[ParsingRegexIndex.bracket]) {
+                let bracket = groups[ParsingRegexIndex.bracket];
             
-            if (bracket in bracketConsumptionPair) {
-                let bra = bracketConsumptionPair[bracket];
-                if (currentBracketStack.length && bra === currentBracketStack[currentBracketStack.length - 1]) {
-                    currentBracketStack.pop();
+                if (bracket in bracketConsumptionPair) {
+                    let bra = bracketConsumptionPair[bracket];
+                    if (currentBracketStack.length && bra === currentBracketStack[currentBracketStack.length - 1]) {
+                        currentBracketStack.pop();
+                    } else {
+                        // Otherwise there might be some syntax error, but we don't really care.
+                        console.log(`Mismatched right bracket "${bracket}".`);
+                    }
                 } else {
-                    // Otherwise there might be some syntax error, but we don't really care.
-                    console.log(`Mismatched right bracket "${bracket}".`);
+                    currentBracketStack.push(bracket);
+                }
+            } else if (!currentBracketStack.length && groups[ParsingRegexIndex.operator]) {
+                currentGroupTarget.hasLowPriorityOperator = true;
+            }
+        }
+        
+        if (currentBracketStack) {
+            if (groups[ParsingRegexIndex.whitespace]) {
+                let range = rangeBuilder.getRange(parsingRegex.lastIndex - text.length, parsingRegex.lastIndex);
+                
+                if (currentGroupTarget.whitespacesRangeAtBeginning instanceof Range) {
+                    currentGroupTarget.whitespacesRangeAtEnd = range;
+                } else {
+                    currentGroupTarget.whitespacesRangeAtBeginning = range;
                 }
             } else {
-                currentBracketStack.push(bracket);
+                if (currentGroupTarget.whitespacesRangeAtBeginning instanceof Range) {
+                    let start = rangeBuilder.getPosition(parsingRegex.lastIndex);
+                    let range = new Range(start, start);
+                    
+                    currentGroupTarget.whitespacesRangeAtEnd = range;
+                } else {
+                    let end = rangeBuilder.getPosition(parsingRegex.lastIndex - text.length);
+                    let range = new Range(end, end);
+                    
+                    currentGroupTarget.whitespacesRangeAtBeginning = range;
+                }
             }
         }
     }
@@ -157,11 +198,15 @@ export function parse(source: string): StringTarget[] {
     function pushNestedTargetStack(): void {
         let target: InterStringGroupTarget = {
             partials: [],
-            bracketStack: []
+            bracketStack: [],
+            hasLowPriorityOperator: false,
+            whitespacesRangeAtBeginning: undefined,
+            whitespacesRangeAtEnd: undefined
         };
         
         currentStringTargets.push(target);
         
+        currentGroupTarget = target;
         currentStringTargets = target.partials;
         currentBracketStack = target.bracketStack;
         nestedStringTargetStack.push(target);
@@ -172,10 +217,12 @@ export function parse(source: string): StringTarget[] {
         let lastIndex = nestedStringTargetStack.length - 1;
         
         if (lastIndex < 0) {
+            currentGroupTarget = undefined;
             currentStringTargets = rootStringTargets;
             currentBracketStack = undefined;
         } else {
             let target = nestedStringTargetStack[lastIndex] as InterStringGroupTarget;
+            currentGroupTarget = target;
             currentStringTargets = target.partials;
             currentBracketStack = target.bracketStack;
         }
@@ -188,12 +235,21 @@ export function parse(source: string): StringTarget[] {
             if (target.partials) {
                 delete target.bracketStack;
                 
-                if (target.partials.length === 0) {
-                    targets.splice(i--, 1);
-                } else {
-                    finalizeTargets(target.partials);
-                }
+                finalizeTargets(target.partials);
+                // if (target.partials.length === 0) {
+                //     targets.splice(i--, 1);
+                // } else {
+                //     finalizeTargets(target.partials);
+                // }
             }
         }
     }
+}
+
+export function isStringGroupTarget(target: StringGroupTarget | StringBodyTarget): target is StringGroupTarget {
+    return !!(target as StringGroupTarget).partials;
+}
+
+export function isStringBodyTarget(target: StringGroupTarget | StringBodyTarget): target is StringBodyTarget {
+    return !(target as StringGroupTarget).partials;
 }
