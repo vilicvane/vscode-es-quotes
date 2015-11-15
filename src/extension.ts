@@ -80,10 +80,10 @@ export function activate() {
             let target = activeTargets[i];
             
             if (isStringBodyTarget(target)) {
-                let value = transform(target.body, StringType.template, type);
+                let value = target.body && transform(target.body, StringType.template, type);
                 
                 if (i > 0) {
-                    value = ' + ' + value;
+                    value = value && ' + ' + value;
                     
                     let previousTarget = activeTargets[i - 1];
                     
@@ -99,7 +99,7 @@ export function activate() {
                 }
                 
                 if (i < activeTargets.length - 1) {
-                    value += ' + ';
+                    value = value && value + ' + ';
                     
                     let nextTarget = activeTargets[i + 1];
                     
