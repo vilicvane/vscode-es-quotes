@@ -29,7 +29,7 @@ export type StringTarget = StringBodyTarget | StringGroupTarget;
 
 type InterStringTarget = StringBodyTarget | InterStringGroupTarget;
 
-const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|(`)|([()\[\]{}])|([?&|+-]|&&|\|\||<<<?|>>>?)|(\s+)|[^]/g;
+const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*\r?\n)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|(`)|([()\[\]{}])|([?&|+-]|&&|\|\||<<<?|>>>?)|(\s+)|[^]/g;
 const templateStringRegex = /* /$templateString/ */ /([`}])((?:\\[^]|(?!\$\{)[^`])*)(`|\$\{)?/g; // This comment is to fix highlighting: `
 
 /* /$parsing/ */
@@ -51,7 +51,9 @@ const enum TemplateStringRegexIndex {
     closingQuote
 }
 
-const bracketConsumptionPair = {
+const bracketConsumptionPair: {
+    [key: string]: string;
+} = {
     '}': '{',
     ']': '[',
     ')': '('
@@ -67,10 +69,14 @@ export function parse(source: string): StringTarget[] {
     let currentStringTargets = rootStringTargets;
     let currentBracketStack: string[];
     
+    let isNewGroupTarget: boolean;
+    
     let groups: RegExpExecArray;
     
     while (groups = parsingRegex.exec(source)) {
         let text = groups[0];
+        
+        isNewGroupTarget = false;
         
         if (groups[ParsingRegexIndex.comment]) {
             // Do nothing.
@@ -79,9 +85,10 @@ export function parse(source: string): StringTarget[] {
             let body = groups[ParsingRegexIndex.stringBody];
             let range = rangeBuilder.getRange(parsingRegex.lastIndex - text.length, parsingRegex.lastIndex);
             
-            if (currentBracketStack && currentBracketStack.length) {
-                pushNestedTargetStack();
-            }
+            // TODO:
+            // if (currentBracketStack && currentBracketStack.length) {
+            //     pushNestedTargetStack();
+            // }
             
             let target: StringBodyTarget = {
                 body,
@@ -156,7 +163,7 @@ export function parse(source: string): StringTarget[] {
                         currentBracketStack.pop();
                     } else {
                         // Otherwise there might be some syntax error, but we don't really care.
-                        console.log(`Mismatched right bracket "${bracket}".`);
+                        console.warn(`Mismatched right bracket "${bracket}".`);
                     }
                 } else {
                     currentBracketStack.push(bracket);
@@ -166,7 +173,7 @@ export function parse(source: string): StringTarget[] {
             }
         }
         
-        if (currentBracketStack) {
+        if (currentGroupTarget) {
             if (groups[ParsingRegexIndex.whitespace]) {
                 let range = rangeBuilder.getRange(parsingRegex.lastIndex - text.length, parsingRegex.lastIndex);
                 
@@ -175,7 +182,7 @@ export function parse(source: string): StringTarget[] {
                 } else {
                     currentGroupTarget.whitespacesRangeAtBeginning = range;
                 }
-            } else {
+            } else if (!isNewGroupTarget) {
                 if (currentGroupTarget.whitespacesRangeAtBeginning instanceof Range) {
                     let start = rangeBuilder.getPosition(parsingRegex.lastIndex);
                     let range = new Range(start, start);
@@ -210,10 +217,13 @@ export function parse(source: string): StringTarget[] {
         currentStringTargets = target.partials;
         currentBracketStack = target.bracketStack;
         nestedStringTargetStack.push(target);
+        
+        isNewGroupTarget = true;
     }
     
     function popNestedTargetStack(): void {
         nestedStringTargetStack.pop();
+        
         let lastIndex = nestedStringTargetStack.length - 1;
         
         if (lastIndex < 0) {
@@ -236,11 +246,6 @@ export function parse(source: string): StringTarget[] {
                 delete target.bracketStack;
                 
                 finalizeTargets(target.partials);
-                // if (target.partials.length === 0) {
-                //     targets.splice(i--, 1);
-                // } else {
-                //     finalizeTargets(target.partials);
-                // }
             }
         }
     }

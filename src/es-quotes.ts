@@ -52,7 +52,8 @@ export function findActiveStringTargets(targets: StringTarget[], selection: Rang
             }
         } else {
             if ((target as StringBodyTarget).range.contains(selection)) {
-                return targets;
+                return (target as StringBodyTarget).type === StringType.template ?
+                    targets : [target];
             }
         }
     }
@@ -61,8 +62,8 @@ export function findActiveStringTargets(targets: StringTarget[], selection: Rang
 }
 
 export function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTarget {
-    let document = editor.getTextDocument();
-    let language = document.getLanguageId();
+    let document = editor.document;
+    let language = document.languageId;
     
     if (supportedLanguages.indexOf(language) < 0) {
         Window.showInformationMessage('Language not supported.');
@@ -70,7 +71,7 @@ export function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTa
     }
     
     let source = document.getText();
-    let selection = editor.getSelection();
+    let selection = editor.selection;
     
     let stringTargets = parse(source);
     let activeTarget = findActiveStringTarget(stringTargets, selection);
@@ -83,8 +84,8 @@ export function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTa
 }
 
 export function findActiveStringTargetsInEditor(editor: TextEditor): StringTarget[] {
-    let document = editor.getTextDocument();
-    let language = document.getLanguageId();
+    let document = editor.document;
+    let language = document.languageId;
     
     if (supportedLanguages.indexOf(language) < 0) {
         Window.showInformationMessage('Language not supported.');
@@ -92,7 +93,7 @@ export function findActiveStringTargetsInEditor(editor: TextEditor): StringTarge
     }
     
     let source = document.getText();
-    let selection = editor.getSelection();
+    let selection = editor.selection;
     
     let stringTargets = parse(source);
     let activeTargets = findActiveStringTargets(stringTargets, selection);

@@ -4,7 +4,7 @@ import * as Path from 'path';
 import {
     window as Window,
     commands as Commands,
-    extensions as Extensions,
+    workspace as Workspace,
     Range,
     TextEditor
 } from 'vscode';
@@ -32,10 +32,10 @@ import {
     RangeBuilder
 } from './range';
 
-const DEFAULT_QUOTE = 'defaultQuote';
+const CONFIG_DEFAULT_QUOTE = 'esQuotes.defaultQuote';
 
 export function activate() {
-    let configMemento = Extensions.getConfigurationMemento('esQuotes');
+    let config = Workspace.getConfiguration();
     
     Commands.registerTextEditorCommand('esQuotes.switchToTemplateString', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
@@ -68,55 +68,55 @@ export function activate() {
             return;
         }
         
-        configMemento
-            .getValue<string>(DEFAULT_QUOTE)
-            .then(quote => {
-                if (!/^["']$/.test(quote)) {
-                    quote = "'";
-                }
+        let quote = config.get<string>(CONFIG_DEFAULT_QUOTE);
+        
+        if (!/^["']$/.test(quote)) {
+            quote = "'";
+        }
+        
+        let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
+        
+        for (let i = 0; i < activeTargets.length; i++) {
+            let target = activeTargets[i];
+            
+            if (isStringBodyTarget(target)) {
+                let value = transform(target.body, StringType.template, type);
                 
-                let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
-                
-                return editor.edit(edit => {
-                    for (let i = 0; i < activeTargets.length; i++) {
-                        let target = activeTargets[i];
+                if (i > 0) {
+                    value = ' + ' + value;
+                    
+                    let previousTarget = activeTargets[i - 1];
+                    
+                    if (isStringGroupTarget(previousTarget)) {
+                        if (previousTarget.hasLowPriorityOperator) {
+                            value = ')' + value;
+                        }
                         
-                        if (isStringBodyTarget(target)) {
-                            let value = transform(target.body, StringType.template, type);
-                            
-                            if (i > 0) {
-                                value = ' + ' + value;
-                                
-                                let previousTarget = activeTargets[i - 1];
-                                if (isStringGroupTarget(previousTarget) && previousTarget.hasLowPriorityOperator) {
-                                    value = ')' + value;
-                                }
-                            }
-                            
-                            if (i < activeTargets.length - 1) {
-                                value += ' + ';
-                                
-                                let nextTarget = activeTargets[i + 1];
-                                if (isStringGroupTarget(nextTarget)) {
-                                    if (nextTarget.hasLowPriorityOperator) {
-                                        value += '(';
-                                    }
-                                    
-                                    // if (nextTarget.whitespacesRangeAtBeginning && !nextTarget.whitespacesRangeAtBeginning.isEmpty()) {
-                                    //     edit.delete(nextTarget.whitespacesRangeAtBeginning);
-                                    // }
-                                    
-                                    // if (nextTarget.whitespacesRangeAtEnd && !nextTarget.whitespacesRangeAtEnd.isEmpty()) {
-                                    //     edit.delete(nextTarget.whitespacesRangeAtEnd);
-                                    // }
-                                }
-                            }
-                            
-                            edit.replace(target.range, value);
+                        if (!previousTarget.whitespacesRangeAtEnd.isEmpty) {
+                            target.range = new Range(previousTarget.whitespacesRangeAtEnd.start, target.range.end);
                         }
                     }
-                });
-            });
+                }
+                
+                if (i < activeTargets.length - 1) {
+                    value += ' + ';
+                    
+                    let nextTarget = activeTargets[i + 1];
+                    
+                    if (isStringGroupTarget(nextTarget)) {
+                        if (nextTarget.hasLowPriorityOperator) {
+                            value += '(';
+                        }
+                        
+                        if (!nextTarget.whitespacesRangeAtBeginning.isEmpty) {
+                            target.range = new Range(target.range.start, nextTarget.whitespacesRangeAtBeginning.end);
+                        }
+                    }
+                }
+                
+                edit.replace(target.range, value);
+            }
+        }
     });
     
     Commands.registerTextEditorCommand('esQuotes.switchBetweenSingleDoubleQuotes', (editor, edit) => {

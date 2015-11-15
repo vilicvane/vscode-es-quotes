@@ -1,18 +1,18 @@
 {
   "name": "es-quotes",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "publisher": "vilicvane",
   "repository": {
     "type": "git",
     "url": "https://github.com/vilic/vscode-es-quotes.git"
   },
   "engines": {
-    "vscode": "*"
+    "vscode": "0.10.x"
   },
   "activationEvents": [
-    "command:esQuotes.switchToTemplateString",
-    "command:esQuotes.switchToNormalString",
-    "command:esQuotes.switchBetweenSingleDoubleQuotes"
+    "onCommand:esQuotes.switchToTemplateString",
+    "onCommand:esQuotes.switchToNormalString",
+    "onCommand:esQuotes.switchBetweenSingleDoubleQuotes"
   ],
   "main": "./bld/extension",
   "contributes": {
@@ -53,5 +53,8 @@
     "gulp": "^3.9.0",
     "regex-tools": "^0.2.1",
     "vscode": "*"
+  },
+  "dependencies": {
+    "typescript": "^1.8.0-dev.20151115"
   }
 }

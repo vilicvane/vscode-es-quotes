@@ -5,7 +5,7 @@ var regexs = {
             name: 'comment',
             regexs: [
                 /\/\*[\s\S]*?(?:\*\/|$)/,
-                /\/\/.*/
+                /\/\/.*\r?\n/
             ],
             or: true
         },

@@ -41,7 +41,7 @@ export class RangeBuilder {
             if (indexRange.end >= index) {
                 if (indexRange.start <= index) {
                     // Within range.
-                    return new Position(i + 1, index - indexRange.start + 1);
+                    return new Position(i, index - indexRange.start);
                 } else {
                     // End of line?
                     let previousIndexRange = indexRanges[i - 1];
