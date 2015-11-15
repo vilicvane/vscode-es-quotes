@@ -7,7 +7,7 @@
     "url": "https://github.com/vilic/vscode-es-quotes.git"
   },
   "engines": {
-    "vscode": "*"
+    "vscode": "0.10.x"
   },
   "activationEvents": [
     "command:esQuotes.switchToTemplateString",
@@ -52,6 +52,6 @@
   "devDependencies": {
     "gulp": "^3.9.0",
     "regex-tools": "^0.2.1",
-    "vscode": "*"
+    "vscode": "0.10.x"
   }
 }
