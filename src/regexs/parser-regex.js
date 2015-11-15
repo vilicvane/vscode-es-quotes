@@ -25,6 +25,32 @@ var regexs = {
             },
             /($closingQuote:($quote))?/
         ],
+        // Regex literal
+        [
+            /\//,
+            {
+                regexs: [
+                    /\\./,
+                    [
+                        /\[/,
+                        {
+                            regexs: [
+                                /\\./,
+                                /[^\]\\]/
+                            ],
+                            or: true,
+                            repeat: '*'
+                        },
+                        /\]?/
+                    ],
+                    /[^\\/]/
+                ],
+                or: true,
+                repeat: '+'
+            },
+            // not using optional closing for less conflict with devide operator `/`
+            /\//
+        ],
         /($templateStringQuote:`)/,
         /($bracket:[()\[\]{}])/,
         /($operator:[?&|+-]|&&|\|\||<<<?|>>>?)/,

@@ -1,6 +1,6 @@
 {
   "name": "es-quotes",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "vilicvane",
   "repository": {
     "type": "git",
@@ -10,9 +10,9 @@
     "vscode": "0.10.x"
   },
   "activationEvents": [
-    "onCommand:esQuotes.switchToTemplateString",
-    "onCommand:esQuotes.switchToNormalString",
-    "onCommand:esQuotes.switchBetweenSingleDoubleQuotes"
+    "onCommand:esQuotes.transformToTemplateString",
+    "onCommand:esQuotes.transformToNormalString",
+    "onCommand:esQuotes.transformBetweenSingleDoubleQuotes"
   ],
   "main": "./bld/extension",
   "contributes": {
@@ -29,18 +29,18 @@
     },
     "commands": [
       {
-        "command": "esQuotes.switchToTemplateString",
-        "title": "Switch to Template String",
+        "command": "esQuotes.transformToTemplateString",
+        "title": "Transform to Template String",
         "category": "ES Quotes"
       },
       {
-        "command": "esQuotes.switchToNormalString",
-        "title": "Switch to Normal String",
+        "command": "esQuotes.transformToNormalString",
+        "title": "Transform to Normal String",
         "category": "ES Quotes"
       },
       {
-        "command": "esQuotes.switchBetweenSingleDoubleQuotes",
-        "title": "Switch between Single and Double Quotes",
+        "command": "esQuotes.transformBetweenSingleDoubleQuotes",
+        "title": "Transform between Single and Double Quotes",
         "category": "ES Quotes"
       }
     ]
@@ -55,6 +55,6 @@
     "vscode": "*"
   },
   "dependencies": {
-    "typescript": "^1.8.0-dev.20151115"
+    "typescript": "next"
   }
 }

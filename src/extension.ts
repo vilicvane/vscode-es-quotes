@@ -37,7 +37,7 @@ const CONFIG_DEFAULT_QUOTE = 'esQuotes.defaultQuote';
 export function activate() {
     let config = Workspace.getConfiguration();
     
-    Commands.registerTextEditorCommand('esQuotes.switchToTemplateString', (editor, edit) => {
+    Commands.registerTextEditorCommand('esQuotes.transformToTemplateString', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
         
         if (!activeTarget) {
@@ -54,7 +54,7 @@ export function activate() {
         edit.replace(activeTarget.range, value);
     });
     
-    Commands.registerTextEditorCommand('esQuotes.switchToNormalString', (editor, edit) => {
+    Commands.registerTextEditorCommand('esQuotes.transformToNormalString', (editor, edit) => {
         let activeTargets = findActiveStringTargetsInEditor(editor);
         
         if (!activeTargets) {
@@ -76,10 +76,22 @@ export function activate() {
         
         let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
         
+        interface EditInfo {
+            range: Range;
+            value: string;
+        }
+        
+        let editInfos: EditInfo[] = [];
+        let hasNonEmptyStringBody = false;
+        
         for (let i = 0; i < activeTargets.length; i++) {
             let target = activeTargets[i];
             
             if (isStringBodyTarget(target)) {
+                if (target.body && !hasNonEmptyStringBody) {
+                    hasNonEmptyStringBody = true;
+                }
+                
                 let value = target.body && transform(target.body, StringType.template, type);
                 
                 if (i > 0) {
@@ -92,7 +104,7 @@ export function activate() {
                             value = ')' + value;
                         }
                         
-                        if (!previousTarget.whitespacesRangeAtEnd.isEmpty) {
+                        if (previousTarget.whitespacesRangeAtEnd && !previousTarget.whitespacesRangeAtEnd.isEmpty) {
                             target.range = new Range(previousTarget.whitespacesRangeAtEnd.start, target.range.end);
                         }
                     }
@@ -108,18 +120,44 @@ export function activate() {
                             value += '(';
                         }
                         
-                        if (!nextTarget.whitespacesRangeAtBeginning.isEmpty) {
+                        if (nextTarget.whitespacesRangeAtBeginning && !nextTarget.whitespacesRangeAtBeginning.isEmpty) {
                             target.range = new Range(target.range.start, nextTarget.whitespacesRangeAtBeginning.end);
                         }
                     }
                 }
                 
-                edit.replace(target.range, value);
+                editInfos.push({
+                    range: target.range,
+                    value
+                });
             }
         }
+        
+        if (!hasNonEmptyStringBody) {
+            let firstEditInfo = editInfos[0];
+            
+            let value = quote + quote;
+            
+            if (activeTargets.length > 1) {
+                value += ' + ' + firstEditInfo.value
+            }
+            
+            firstEditInfo.value = value;
+        }
+        
+        editor
+            .edit(edit => {
+                for (let editInfo of editInfos) {
+                    edit.replace(editInfo.range, editInfo.value);
+                }
+            })
+            .then(undefined, reason => {
+                console.error(reason);
+                Window.showInformationMessage('Failed to transform selected template string.');
+            });
     });
     
-    Commands.registerTextEditorCommand('esQuotes.switchBetweenSingleDoubleQuotes', (editor, edit) => {
+    Commands.registerTextEditorCommand('esQuotes.transformBetweenSingleDoubleQuotes', (editor, edit) => {
         let activeTarget = findActiveStringTargetInEditor(editor);
         
         if (!activeTarget) {
