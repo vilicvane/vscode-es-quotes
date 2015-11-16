@@ -61,7 +61,12 @@ export function findActiveStringTargets(targets: StringTarget[], selection: Rang
     return undefined;
 }
 
-export function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTarget {
+export interface FindActiveStringTargetResult {
+    defaultQuote: string;
+    target: StringBodyTarget;
+}
+
+export function findActiveStringTargetInEditor(editor: TextEditor): FindActiveStringTargetResult {
     let document = editor.document;
     let language = document.languageId;
     
@@ -73,17 +78,27 @@ export function findActiveStringTargetInEditor(editor: TextEditor): StringBodyTa
     let source = document.getText();
     let selection = editor.selection;
     
-    let stringTargets = parse(source);
+    let result = parse(source);
+    
+    let stringTargets = result.stringTargets;
     let activeTarget = findActiveStringTarget(stringTargets, selection);
     
     if (!activeTarget) {
         Window.showInformationMessage('No string found at selected range.');
     }
     
-    return activeTarget;
+    return {
+        defaultQuote: result.defaultQuote,
+        target: activeTarget
+    };
 }
 
-export function findActiveStringTargetsInEditor(editor: TextEditor): StringTarget[] {
+export interface FindActiveStringTargetsResult {
+    defaultQuote: string;
+    targets: StringTarget[];
+}
+
+export function findActiveStringTargetsInEditor(editor: TextEditor): FindActiveStringTargetsResult {
     let document = editor.document;
     let language = document.languageId;
     
@@ -95,12 +110,16 @@ export function findActiveStringTargetsInEditor(editor: TextEditor): StringTarge
     let source = document.getText();
     let selection = editor.selection;
     
-    let stringTargets = parse(source);
+    let result = parse(source);
+    let stringTargets = result.stringTargets;
     let activeTargets = findActiveStringTargets(stringTargets, selection);
     
     if (!activeTargets) {
         Window.showInformationMessage('No string found at selected range.');
     }
     
-    return activeTargets;
+    return {
+        defaultQuote: result.defaultQuote,
+        targets: activeTargets
+    };
 }

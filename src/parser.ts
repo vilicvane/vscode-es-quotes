@@ -59,7 +59,12 @@ const bracketConsumptionPair: {
     ')': '('
 };
 
-export function parse(source: string): StringTarget[] {
+export interface ParseResult {
+    defaultQuote: string;
+    stringTargets: StringTarget[];
+}
+
+export function parse(source: string): ParseResult {
     let rangeBuilder = new RangeBuilder(source);
     
     let rootStringTargets: InterStringTarget[] = [];
@@ -72,6 +77,9 @@ export function parse(source: string): StringTarget[] {
     let isNewGroupTarget: boolean;
     
     let groups: RegExpExecArray;
+    
+    let doubleQuotedCount = 0;
+    let singleQuotedCount = 0;
     
     while (groups = parsingRegex.exec(source)) {
         let text = groups[0];
@@ -90,12 +98,22 @@ export function parse(source: string): StringTarget[] {
             //     pushNestedTargetStack();
             // }
             
+            let type: StringType;
+            
+            if (quote === '"') {
+                type = StringType.doubleQuoted;
+                doubleQuotedCount++;
+            } else {
+                type = StringType.singleQuoted;
+                singleQuotedCount++;
+            }
+            
             let target: StringBodyTarget = {
                 body,
                 range,
                 opening: quote,
                 closing: quote,
-                type: quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted
+                type
             };
             
             currentStringTargets.push(target);
@@ -200,7 +218,10 @@ export function parse(source: string): StringTarget[] {
     
     finalizeTargets(rootStringTargets);
     
-    return rootStringTargets;
+    return {
+        defaultQuote: singleQuotedCount < doubleQuotedCount ? '"' : "'",
+        stringTargets: rootStringTargets
+    };
     
     function pushNestedTargetStack(): void {
         let target: InterStringGroupTarget = {

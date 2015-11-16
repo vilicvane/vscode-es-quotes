@@ -38,7 +38,8 @@ export function activate() {
     let config = Workspace.getConfiguration();
     
     Commands.registerTextEditorCommand('esQuotes.transformToTemplateString', (editor, edit) => {
-        let activeTarget = findActiveStringTargetInEditor(editor);
+        let result = findActiveStringTargetInEditor(editor);
+        let activeTarget = result.target;
         
         if (!activeTarget) {
             return;
@@ -55,7 +56,8 @@ export function activate() {
     });
     
     Commands.registerTextEditorCommand('esQuotes.transformToNormalString', (editor, edit) => {
-        let activeTargets = findActiveStringTargetsInEditor(editor);
+        let result = findActiveStringTargetsInEditor(editor);
+        let activeTargets = result.targets;
         
         if (!activeTargets) {
             return;
@@ -71,7 +73,7 @@ export function activate() {
         let quote = config.get<string>(CONFIG_DEFAULT_QUOTE);
         
         if (!/^["']$/.test(quote)) {
-            quote = "'";
+            quote = result.defaultQuote;
         }
         
         let type = quote === '"' ? StringType.doubleQuoted : StringType.singleQuoted;
@@ -158,7 +160,8 @@ export function activate() {
     });
     
     Commands.registerTextEditorCommand('esQuotes.transformBetweenSingleDoubleQuotes', (editor, edit) => {
-        let activeTarget = findActiveStringTargetInEditor(editor);
+        let result = findActiveStringTargetInEditor(editor);
+        let activeTarget = result.target;
         
         if (!activeTarget) {
             return;

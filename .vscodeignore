@@ -1,7 +1,8 @@
 .vscode/**
 typings/**
-**/*.ts
+src/**
 **/*.map
+**/*.fw.png
 bld/tests/**
 .gitignore
 jsconfig.json
