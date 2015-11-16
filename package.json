@@ -1,9 +1,9 @@
 {
   "name": "es-quotes",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "vilicvane",
   "displayName": "ECMAScript Quotes Transformer",
-  "description": "Transform quotes of ECMAScript string literals",
+  "description": "Transform quotes of ECMAScript string literals.",
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
