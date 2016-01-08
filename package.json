@@ -1,6 +1,6 @@
 {
   "name": "es-quotes",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publisher": "vilicvane",
   "displayName": "ECMAScript Quotes Transformer",
   "description": "Transform quotes of ECMAScript string literals.",

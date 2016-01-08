@@ -36,14 +36,14 @@ var regexs = {
                         {
                             regexs: [
                                 /\\./,
-                                /[^\]\\]/
+                                /[^\]\\\r\n]/
                             ],
                             or: true,
                             repeat: '*'
                         },
                         /\]?/
                     ],
-                    /[^\\/]/
+                    /[^\\/\r\n]/
                 ],
                 or: true,
                 repeat: '+'

@@ -29,7 +29,7 @@ export type StringTarget = StringBodyTarget | StringGroupTarget;
 
 type InterStringTarget = StringBodyTarget | InterStringGroupTarget;
 
-const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*\r?\n)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|\/(?:\\.|\[(?:\\.|[^\]\\])*\]?|[^\\\/])+\/|(`)|([()\[\]{}])|([?&|+-]|&&|\|\||<<<?|>>>?)|(\s+)|[^]/g;
+const parsingRegex = /* /$parsing/ */ /(\/\*[\s\S]*?(?:\*\/|$)|\/\/.*\r?\n)|(["'])((?:\\(?:\r\n|[^])|(?!\2|\\).)*)(\2)?|\/(?:\\.|\[(?:\\.|[^\]\\\r\n])*\]?|[^\\\/\r\n])+\/|(`)|([()\[\]{}])|([?&|+-]|&&|\|\||<<<?|>>>?)|(\s+)|[^]/g;
 const templateStringRegex = /* /$templateString/ */ /([`}])((?:\\[^]|(?!\$\{)[^`])*)(`|\$\{)?/g; // This comment is to fix highlighting: `
 
 /* /$parsing/ */
