@@ -20,8 +20,10 @@ export const enum StringType {
 }
 
 const supportedLanguages = [
+    'javascript',
+    'javascriptreact',
     'typescript',
-    'javascript'
+    'typescriptreact'
 ];
 
 export function findActiveStringTarget(targets: StringTarget[], selection: Range): StringBodyTarget {
@@ -38,7 +40,7 @@ export function findActiveStringTarget(targets: StringTarget[], selection: Range
             }
         }
     }
-    
+
     return undefined;
 }
 
@@ -57,7 +59,7 @@ export function findActiveStringTargets(targets: StringTarget[], selection: Rang
             }
         }
     }
-    
+
     return undefined;
 }
 
@@ -69,24 +71,24 @@ export interface FindActiveStringTargetResult {
 export function findActiveStringTargetInEditor(editor: TextEditor): FindActiveStringTargetResult {
     let document = editor.document;
     let language = document.languageId;
-    
+
     if (supportedLanguages.indexOf(language) < 0) {
-        Window.showInformationMessage('Language not supported.');
+        Window.showInformationMessage('Language not supported: ' + language);
         return;
     }
-    
+
     let source = document.getText();
     let selection = editor.selection;
-    
+
     let result = parse(source);
-    
+
     let stringTargets = result.stringTargets;
     let activeTarget = findActiveStringTarget(stringTargets, selection);
-    
+
     if (!activeTarget) {
         Window.showInformationMessage('No string found at selected range.');
     }
-    
+
     return {
         defaultQuote: result.defaultQuote,
         target: activeTarget
@@ -101,23 +103,23 @@ export interface FindActiveStringTargetsResult {
 export function findActiveStringTargetsInEditor(editor: TextEditor): FindActiveStringTargetsResult {
     let document = editor.document;
     let language = document.languageId;
-    
+
     if (supportedLanguages.indexOf(language) < 0) {
         Window.showInformationMessage('Language not supported.');
         return;
     }
-    
+
     let source = document.getText();
     let selection = editor.selection;
-    
+
     let result = parse(source);
     let stringTargets = result.stringTargets;
     let activeTargets = findActiveStringTargets(stringTargets, selection);
-    
+
     if (!activeTargets) {
         Window.showInformationMessage('No string found at selected range.');
     }
-    
+
     return {
         defaultQuote: result.defaultQuote,
         targets: activeTargets
