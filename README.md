@@ -27,6 +27,8 @@ ext install es-quotes
   Transform a template string to a normal string.
 - `esQuotes.transformBetweenSingleDoubleQuotes`
   Transform a normal string between single and double quotes.
+- `esQuotes.transformBetweenQuotes`
+  Transform a normal string between single, double and template quotes.
 
 ## Options
 
