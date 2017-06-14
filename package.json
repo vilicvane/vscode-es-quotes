@@ -15,7 +15,8 @@
   "activationEvents": [
     "onCommand:esQuotes.transformToTemplateString",
     "onCommand:esQuotes.transformToNormalString",
-    "onCommand:esQuotes.transformBetweenSingleDoubleQuotes"
+    "onCommand:esQuotes.transformBetweenSingleDoubleQuotes",
+    "onCommand:esQuotes.transformBetweenQuotes"
   ],
   "main": "./bld/src/extension",
   "contributes": {
@@ -43,6 +44,11 @@
       {
         "command": "esQuotes.transformBetweenSingleDoubleQuotes",
         "title": "Transform between Single and Double Quotes",
+        "category": "ES Quotes"
+      },
+      {
+        "command": "esQuotes.transformBetweenQuotes",
+        "title": "Transform between Single, Double and Template Quotes",
         "category": "ES Quotes"
       }
     ]
