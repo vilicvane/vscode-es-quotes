@@ -23,7 +23,8 @@ const supportedLanguages = [
     'javascript',
     'javascriptreact',
     'typescript',
-    'typescriptreact'
+    'typescriptreact',
+    'vue'
 ];
 
 export function findActiveStringTarget(targets: StringTarget[], selection: Range): StringBodyTarget {
