@@ -22,6 +22,7 @@ export const enum StringType {
 const supportedLanguages = [
     'javascript',
     'javascriptreact',
+    'json',
     'typescript',
     'typescriptreact',
     'vue'
